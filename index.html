@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="node_modules/xterm/css/xterm.css" />
+    <script src="node_modules/xterm/lib/xterm.js"></script>
+    <script src="node_modules/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
+    <script src="node_modules/xterm-pty/src/index.ts"></script>
+</head>
+
+<body>
+    <div id="terminal" style="display: inline-block;"></div>
+    <script type="module">
+        import 'https://unpkg.com/xterm@5.3.0/lib/xterm.js';
+        import 'https://unpkg.com/xterm-pty/index.js';
+        import initEmscripten from './output/output.mjs';
+        // import { FitAddon } from './node_modules/xterm-addon-fit/xterm-addon-fit.js';
+
+
+        var xterm = new Terminal({
+            rows: 22,
+        });
+        let fitAddon = new FitAddon.FitAddon();
+        xterm.open(document.getElementById('terminal'));
+
+        // Create master/slave objects
+        const { master, slave } = openpty();
+
+        // Connect the master object to xterm.js
+        xterm.loadAddon(master);
+        xterm.loadAddon(fitAddon);
+
+        await initEmscripten({
+            pty: slave
+        });
+        fitAddon.fit();
+    </script>
+</body>
+
+</html>

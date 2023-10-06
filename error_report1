@@ -1,0 +1,2 @@
+emcc -pthread -sPTHREAD_POOL_SIZE=2 -s PROXY_TO_PTHREAD --js-library=node_modules/xterm-pty/emscripten-pty.js -o ./output/output.mjs  *.c
+SharedArrayBuffer is not defined
