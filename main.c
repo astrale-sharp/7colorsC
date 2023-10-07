@@ -116,24 +116,30 @@ int main() {
     printf("%s", CLEAR);
     board_print(&board);
     // todo add a color here to show who is playing
-    printf("Player turn, enter a letter from A to G or type H for help.");
+    printf("Player turn, enter a letter from A to G or type H for "
+           "help:%s%s",
+           BLINK, BACK);
 
     // get valid moves
     _2DArray case_of_player = get_case_with_idx(&board, special_index);
     // for each case, add case to handled, neighbours to to_handle
     // until to_handle is empty, pop last elem
     // Special? neighbors to to_handle : add to valid moves
-    
 
     // forEach owned case at the border, add neighbour to list if not present
 
     // which
     while (1) {
-      char c = getchar();
+      char *line = NULL;
+      size_t len = 0;
+      ssize_t lineSize = 0;
+      lineSize = getline(&line, &len, stdin);
+      char c = line[0];
       printf("You selected %c\n", c);
-      
+      printf("Select again:%s%s", BLINK, BACK);
       // break;
       // recursively change the board
+      free(line);
     }
     // break;
   }

@@ -17,4 +17,11 @@ __attribute__((unused)) static const char *FgWhite = "\033[97m";
 __attribute__((unused)) static const char *BgWhite = "\033[107m";
 __attribute__((unused)) static const char *BACK = "\033[0m";
 __attribute__((unused)) static const char *CLEAR = "\e[1;1H\e[2J";
+#ifdef __EMSCRIPTEN__
+__attribute__((unused)) static const char *BLINK = "";
+#else
+__attribute__((unused)) static const char *BLINK = "\033[5;1;4m";
+#endif
+
+
 void print_color(int idx, int trailing_space);
