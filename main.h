@@ -1,5 +1,5 @@
 #include <stddef.h>
-
+#include "array/array.h"
 typedef struct Board {
   // contains size squared element.
   size_t size;
@@ -11,10 +11,6 @@ typedef struct Board {
 
 // contains length element
 // each element contains at 0: x, at 1: y
-typedef struct _2DArray {
-  size_t length;
-  int **data;
-} _2DArray;
 
 int populate_random();
 
@@ -28,5 +24,4 @@ int **get_neighbors(size_t x, size_t y);
 void free_neighbors(int **n);
 void print_neighbors(int **n);
 
-_2DArray get_case_with_idx(Board *board, int idx);
-void free_2d_array(_2DArray);
+Vec get_case_with_idx(Board *board, int idx);

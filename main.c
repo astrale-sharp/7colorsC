@@ -1,10 +1,12 @@
 #include "main.h"
-#include "colors.h"
+#include "colors/colors.h"
+#include "array/array.h"
 #include <stdatomic.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
 
 // returns an int from 0 to 6 which is a `color`.
 int populate_random() { return rand() % 7; }
@@ -120,9 +122,11 @@ int main() {
            "help:%s%s",
            BLINK, BACK);
 
+
     // get valid moves
     _2DArray case_of_player = get_case_with_idx(&board, special_index);
     // for each case, add case to handled, neighbours to to_handle
+
     // until to_handle is empty, pop last elem
     // Special? neighbors to to_handle : add to valid moves
 
