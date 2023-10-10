@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "noImplicitAny": true,
+        "module": "es2020",
+        "target": "es5",
+        "strict": true,
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "declaration": true,
+        "sourceMap": true,
+        "outDir": "./out/",
+        "baseUrl": ".",
+    },
+    "include": ["./src/", "./static/*-core.js"]
+}
