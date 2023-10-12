@@ -14,12 +14,13 @@
 #define CONCATBIS(A, B) A##B
 #define CONCAT(A, B) CONCATBIS(A, B)
 
-#define VecType CONCAT(Vec_, TName)
-#define vec_new CONCAT(vec_new_, TName)
-#define vec_pop CONCAT(vec_pop_, TName)
-#define vec_push CONCAT(vec_push_, TName)
-#define vec_free CONCAT(vec_free_, TName)
-#define vec_print CONCAT(vec_print_, TName)
+#define VecType CONCAT(TName, )
+#define vec_new CONCAT(VecType, _new)
+#define vec_pop CONCAT(VecType, _pop)
+#define vec_get CONCAT(VecType, _get)
+#define vec_push CONCAT(VecType, _push)
+#define vec_free CONCAT(VecType, _free)
+#define vec_print CONCAT(VecType, _print)
 
 typedef struct {
   size_t len;
@@ -27,17 +28,18 @@ typedef struct {
   T *data;
 } VecType;
 
-VecType vec_new();
-T vec_pop(VecType *vec);
-void vec_push(VecType *vec, T elem);
-void vec_free(VecType *vec);
-void vec_print(VecType *vec, void (*print_func)(T));
+static VecType vec_new();
+static T vec_pop(VecType *vec);
+static void vec_push(VecType *vec, T elem);
+static void vec_free(VecType *vec);
+static void vec_print(VecType *vec, void (*print_func)(T));
+static T *vec_get(VecType *vec, size_t idx);
 
 VecType vec_new() {
   VecType l = (VecType){
       .len = 0,
       .capacity = 4,
-      .data = malloc(0),
+      .data = malloc(4 * sizeof(T)),
   };
   return l;
 }
@@ -64,6 +66,16 @@ T vec_pop(VecType *vec) {
   } else {
     printf("panic vecT pop");
     exit(1);
+  }
+}
+
+T *vec_get(VecType *vec, size_t idx) {
+  if (vec->len <= idx) {
+    printf("out of bounds error in");
+    printf(" %s with idx: %li and len: %li", "#vec_get", idx, vec->len);
+    exit(1);
+  } else {
+    return &vec->data[idx];
   }
 }
 

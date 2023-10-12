@@ -1,45 +1,59 @@
 #include <assert.h>
+#include <stdio.h>
 #define T int
-#define TName int
+#define TName iVec
 #include "array.h"
 #undef TName
 #undef T
 
-#define T Vec_int
-#define TName Vec_int
+#define T iVec
+#define TName xyVec
 #include "array.h"
 #undef T
 #undef TName
 
 void pint(int i) { printf("-%i", i); }
 
-void pvint(Vec_int v) {
-    vec_print_int(&v,pint);
-}
+void pvint(iVec v) { iVec_print(&v, pint); }
 
 void test() {
-    Vec_Vec_int mega = vec_new_Vec_int();
-  Vec_int v = vec_new_int();
-  Vec_int v2 = vec_new_int();
-  vec_push_int(&v, 4);
-  vec_push_int(&v, 6);
-  vec_push_int(&v, 8);
+  xyVec mega = xyVec_new();
+  iVec v = iVec_new();
+  iVec v2 = iVec_new();
+  iVec_push(&v, 4);
+  iVec_push(&v, 6);
+  iVec_push(&v, 8);
 
-  vec_push_int(&v2, 1);
-  vec_push_int(&v2, 2);
-  vec_push_int(&v2, 3);
-//   ARNAUDTODO uncomment
-//   vec_push_Vec_int(&mega, v2);
-//   vec_push_Vec_int(&mega, v);
+  iVec_push(&v2, 1);
+  iVec_push(&v2, 2);
+  iVec_push(&v2, 3);
 
-  vec_print_int(&v, pint);
-  vec_print_int(&v2, pint);
+  xyVec_push(&mega, v);
+  xyVec_push(&mega, v2);
 
-//   vec_print_Vec_int(&mega, pvint);
+  assert(*iVec_get(&v, 0) == 4);
+  assert(*iVec_get(&v, 1) == 6);
+  assert(*iVec_get(&v, 2) == 8);
 
-//   assert(8 == vec_pop_int(&v));
-//   assert(6 == vec_pop_int(&v));
-//   assert(4 == vec_pop_int(&v));
+  assert(v.data[0] == 4);
+  assert(v.data[1] == 6);
+  assert(v.data[2] == 8);
+
+  assert(v2.data[0] == 1);
+  assert(v2.data[1] == 2);
+  assert(v2.data[2] == 3);
+
+  assert(mega.data[0].data == v.data);
+  assert(mega.data[1].data == v2.data);
+
+  assert(mega.data[0].data[0] == 4);
+  assert(mega.data[0].data[1] == 6);
+  assert(mega.data[0].data[2] == 8);
+
+  iVec_print(&v, pint);
+  iVec_print(&v2, pint);
+
+  xyVec_print(&mega, pvint);
 }
 
 void test2() {}
