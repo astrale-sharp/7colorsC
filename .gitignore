@@ -1,2 +1,5 @@
 /output/
 ./mainnode_modules/
+**.o
+**.bin
+bin
