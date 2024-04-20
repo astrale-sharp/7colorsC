@@ -22,6 +22,3 @@ __attribute__((unused)) static const char *BLINK = "";
 #else
 __attribute__((unused)) static const char *BLINK = "\033[5;1;4m";
 #endif
-
-
-void print_color(int idx, int trailing_space);

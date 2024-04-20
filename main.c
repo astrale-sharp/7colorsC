@@ -1,98 +1,24 @@
 #include "main.h"
-#include "array/array.c"
 #include "colors/colors.h"
-#include <stdatomic.h>
+#include "player_utils.h"
+#include "tile_utils.h"
+#include "types.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
-typedef struct Point {
-  int x;
-  int y;
-} Point;
-
-typedef enum Tile {
-  BLUE,
-  CYAN,
-  GREEN,
-  ORANGE,
-  WHITE,
-  RED_TOPRIGHT,
-  PURPLE_BOTTOMLEFT,
-} Tile;
-
-char tile_to_char(enum Tile *t) {
-  switch (*t) {
-
-  case BLUE:
-    return 'B';
-  case CYAN:
-    return 'C';
-  case GREEN:
-    return 'G';
-  case ORANGE:
-    return 'O';
-  case WHITE:
-    return 'W';
-  case RED_TOPRIGHT:
-    return ' ';
-  case PURPLE_BOTTOMLEFT:
-    return ' ';
+void print_board(enum Tile **board, size_t board_size) {
+  for (int x = 0; x < board_size; x++) {
+    for (int y = 0; y < board_size; y++) {
+      // printf(" ");
+      print_tile_as_board(&board[x][y]);
+      // printf(" ");
+    }
+    // printf("\n");
+    printf("\n");
   }
-}
-
-void print_tile_as_board(enum Tile *t) {
-  switch (*t) {
-
-  case BLUE:
-    printf(BgBlue);
-    break;
-  case CYAN:
-    printf(BgCyan);
-    break;
-  case GREEN:
-    printf(BgGreen);
-    break;
-  case ORANGE:
-    printf(BgOrange);
-    break;
-  case WHITE:
-    // printf(BgWhite);
-    break;
-  case RED_TOPRIGHT:
-    printf(BgRed);
-    break;
-
-  case PURPLE_BOTTOMLEFT:
-    printf(BgPurple);
-    break;
-  }
-  printf(" %c ", tile_to_char(t));
-  printf(BACK);
-}
-
-enum Tile get_random_tile() { return random() % 5; }
-
-void print_board(enum Tile **board) {}
-
-char *get_player_name(int active_player) {
-
-  char *color;
-  char *name;
-  if (active_player == 0) {
-    color = BgRed;
-    name = "top right";
-  } else {
-    color = BgPurple;
-    name = "bottom left";
-  }
-  char *dest = malloc(sizeof(char) * 30);
-  strcat(dest, color);
-  strcat(dest, name);
-  strcat(dest, BACK);
-  return dest;
 }
 
 char get_input() {
@@ -109,303 +35,197 @@ char get_input() {
   return c;
 }
 
-// may return NULL
-enum Tile *char_to_tile(char c) {
-  enum Tile *t = malloc(sizeof(enum Tile));
-  switch (c) {
-  // python macro
-  // l = [["BLUE", "b", "B", "1"],["CYAN", "c", "C", "2"],["GREEN", "g", "G",
-  // "3"],["ORANGE", "o", "O", "4"],["WHITE", "w", "W", "5"],]
-  //
-  // for x in l:
-  //     head = x[0]
-  //     for case in (x[1:]):
-  //         print( end="\t"
-  //             "case '%s' : {*t = %s; break;}" % (case, head),
-  //             )
-  //     print()
-  case 'b': {
-    *t = BLUE;
-    break;
-  }
-  case 'B': {
-    *t = BLUE;
-    break;
-  }
-  case '1': {
-    *t = BLUE;
-    break;
-  }
-  case 'c': {
-    *t = CYAN;
-    break;
-  }
-  case 'C': {
-    *t = CYAN;
-    break;
-  }
-  case '2': {
-    *t = CYAN;
-    break;
-  }
-  case 'g': {
-    *t = GREEN;
-    break;
-  }
-  case 'G': {
-    *t = GREEN;
-    break;
-  }
-  case '3': {
-    *t = GREEN;
-    break;
-  }
-  case 'o': {
-    *t = ORANGE;
-    break;
-  }
-  case 'O': {
-    *t = ORANGE;
-    break;
-  }
-  case '4': {
-    *t = ORANGE;
-    break;
-  }
-  case 'w': {
-    *t = WHITE;
-    break;
-  }
-  case 'W': {
-    *t = WHITE;
-    break;
-  }
-  case '5': {
-    *t = WHITE;
-    break;
-  }
+enum Tile *get_tile_choice() {
+  enum Tile *choice = NULL;
 
-  ////////////////////
-  default: {
-    return NULL;
+  while (choice == NULL) {
+    printf("please input a character.\n");
+    printf("%s%s", BLINK, BACK);
+    char c = get_input();
+    choice = char_to_tile(c);
+    if (choice == NULL) {
+      printf("incorrect char %c - %i\nPress enter to continue", c, c);
+      char _ = get_input();
+      continue;
+    } else {
+      printf("get tile choice: %c\n", tile_to_char(choice));
+    }
   }
-  }
-  return t;
+  return choice;
 }
 
-int main() {
+// put candidate in target if
+// - is of right tile color and
+// - is in the board and
+// - a clone isn't already in the target
+void filter_put(Tile **board, size_t board_size, Tile chosen_tile,
+                Point candidate, Point *target, size_t *target_len,
+                Point *gen_pool, size_t *gen_pool_len) {
+
+  if (candidate.x < 0 || candidate.x >= board_size || candidate.y < 0 ||
+      candidate.y >= board_size) {
+    return;
+  }
+
+  if (chosen_tile != board[candidate.x][candidate.y]) {
+    return;
+  }
+
+  int filter = 0;
+  for (int i = 0; i < *target_len; i++) {
+    Point p = target[i];
+    if (p.x == candidate.x && p.y == candidate.y) {
+      filter = 1;
+      break;
+    }
+  }
+
+  if (filter == 0) {
+    target[*target_len] = candidate;
+    (*target_len)++;
+  }
+}
+
+Point *get_4points_around(Point p) {
+  Point *res = malloc(4 * sizeof(Point));
+  res[0] = (Point){p.x, p.y + 1};
+  res[1] = (Point){p.x, p.y - 1};
+  res[2] = (Point){p.x + 1, p.y};
+  res[3] = (Point){p.x - 1, p.y};
+
+  return res;
+}
+
+void play_move(Tile **board, size_t board_size, Tile *choice,
+               Point *this_owned_line, size_t *this_len, Point *converted,
+               size_t *converted_len, int *active_player, Tile player_color,
+               int is_ai) {
+  size_t save_len = *this_len;
+  for (int i = 0; i < *this_len; i++) {
+    Point p = this_owned_line[i];
+
+    for (int d = 0; d < *this_len; d++) {
+    }
+    // 4 elements
+    Point *neighbors = get_4points_around(p);
+
+    for (int j = 0; j < 4; j++) {
+      Point this_neighbor = neighbors[j];
+
+      filter_put(board, board_size, *choice, this_neighbor, converted,
+                 converted_len, this_owned_line, this_len);
+    }
+
+    for (int j = 0; j < *converted_len; j++) {
+      Point c = converted[j];
+      int filter = 0;
+
+      for (int k = 0; k < *this_len; k++) {
+        Point p = this_owned_line[k];
+        if (p.x == c.x && p.y == c.y) {
+          filter = 1;
+          break;
+        }
+      }
+      if (filter == 0) {
+        board[c.x][c.y] = player_color;
+        this_owned_line[*this_len] = c;
+        (*this_len)++;
+      }
+    }
+  }
+
+  if (save_len != *this_len) {
+    if (*active_player == 0) {
+      *active_player = 1;
+    } else {
+      *active_player = 0;
+    }
+  } else {
+    if (!is_ai) {
+      printf("EMPTY MOVE ARE INVALID, PRESS ENTER TO SELECT AGAIN\n");
+      get_input();
+    }
+  }
+}
+
+int play(size_t board_size) {
   // use the time to set the seed
   srand(time(NULL));
 
   // o is top right, 1 is bottomleft
   int active_player = 0;
 
-  size_t BOARD_SIZE = 25;
-
-  enum Tile **board = malloc(BOARD_SIZE * sizeof(enum Tile *));
-  for (int x = 0; x < BOARD_SIZE; x++) {
-    enum Tile *line = malloc(BOARD_SIZE * sizeof(enum Tile));
-    for (int y = 0; y < BOARD_SIZE; y++) {
+  enum Tile **board = malloc(board_size * sizeof(enum Tile *));
+  // fill the board with random tiles
+  for (int x = 0; x < board_size; x++) {
+    enum Tile *line = malloc(board_size * sizeof(enum Tile));
+    for (int y = 0; y < board_size; y++) {
       line[y] = get_random_tile();
     }
     board[x] = line;
   }
+  // set top right and bottom left
+  board[board_size - 1][0] = PURPLE_BOTTOMLEFT;
+  board[0][board_size - 1] = RED_TOPRIGHT;
 
-  board[BOARD_SIZE - 1][0] = PURPLE_BOTTOMLEFT;
-  board[0][BOARD_SIZE - 1] = RED_TOPRIGHT;
+  Point *top_right_tiles = malloc(board_size * board_size * sizeof(Point));
+  Point *bottom_left_tiles = malloc(board_size * board_size * sizeof(Point));
 
-  Point *top_right_tiles = malloc(BOARD_SIZE * BOARD_SIZE * sizeof(Point));
-  Point *bottom_left_tiles = malloc(BOARD_SIZE * BOARD_SIZE * sizeof(Point));
-
-  top_right_tiles[0] = (Point){.x = BOARD_SIZE - 1, .y = 0};
+  top_right_tiles[0] = (Point){.x = 0, .y = board_size - 1};
   size_t top_right_tiles_len = 1;
-  //
-  bottom_left_tiles[0] = (Point){.x = 0, .y = BOARD_SIZE - 1};
+
+  bottom_left_tiles[0] = (Point){.x = board_size - 1, .y = 0};
   size_t bottom_left_tiles_len = 1;
 
   while (1) {
-    printf("%s", CLEAR);
+    Point *converted = malloc(board_size * board_size * sizeof(Point));
+    size_t converted_len = 0;
 
-    // print_board
-    for (int x = 0; x < BOARD_SIZE; x++) {
-      for (int y = 0; y < BOARD_SIZE; y++) {
-        // printf(" ");
-        print_tile_as_board(&board[x][y]);
-        // printf(" ");
-      }
-      // printf("\n");
-      printf("\n");
-    }
+    size_t *this_len;
+    Point *this_owned_line;
 
-    printf("Now playing : %s\n", get_player_name(active_player));
-    printf("1 - BLUE\n2 - CYAN\n3 - GREEN\n4 - ORANGE\n5 - WHITE\n");
-    enum Tile *choice = NULL;
+    Tile player_color;
 
-    while (choice == NULL) {
-      printf("please input a character.\n");
-      printf("%s%s", BLINK, BACK);
-      char c = get_input();
-      choice = char_to_tile(c);
-      if (choice == NULL) {
-        printf("incorrect char %c\n", c);
-        char _ = get_input();
-        continue;
-      } else {
-        printf("got tile: %c", tile_to_char(choice));
-      }
+    if (active_player == 0) {
+      this_len = &top_right_tiles_len;
+      this_owned_line = top_right_tiles;
+      player_color = RED_TOPRIGHT;
 
-      // get current line of player
-      Point *neigbhors = malloc(BOARD_SIZE * BOARD_SIZE * sizeof(Point));
-      size_t neighbors_len = 0;
-      size_t *this_len;
-      Point *this_owned_line;
+      printf("%s", CLEAR);
 
-      if (active_player == 0) {
-        this_len = &top_right_tiles_len;
-        this_owned_line = top_right_tiles;
-      } else {
-        this_len = &bottom_left_tiles_len;
-        this_owned_line = bottom_left_tiles;
+      print_board(board, board_size);
+
+      printf("Now playing : %s\n", get_player_name(active_player));
+      printf("1 - BLUE\n2 - CYAN\n3 - GREEN\n4 - ORANGE\n5 - WHITE\n");
+
+      enum Tile *choice = get_tile_choice();
+      switch (*choice) {
+      case RED_TOPRIGHT:
+      case PURPLE_BOTTOMLEFT:
+        printf("ERR: chosen tile:");
+        print_tile_as_board(choice);
+        printf("is red or purple which is impossible");
+        exit(1);
+
+      default:
+        break;
       }
 
-      for (int i = 0; i < *this_len; i++) {
-        Point p = this_owned_line[i];
-        Point n1 = (Point){p.x, p.y + 1};
-        Point n2 = (Point){p.x, p.y - 1};
-        Point n3 = (Point){p.x + 1, p.y};
-        Point n4 = (Point){p.x - 1, p.y};
-        Point X;
-        /// if not out of bounds and not owned, add to owned.
-        /// python generate
-// template = """{
-//           int filter = 0;
-//           for (int i = 0; i < *this_len; i++) {
-//             Point p = this_owned_line[i];
-//             if (p.x == $0$.x && p.y == $0$.y) {
-//               filter = 1;
-//               break;
-//             }
-//           }
-//           if (filter == 0) {
-//             for (int i = 0; i < neighbors_len; i++) {
-//               Point p = neigbhors[i];
-//               if (p.x == $0$.x && p.y == $0$.y) {
-//                 filter = 1;
-//                 break;
-//               }
-//             }
-//           }
-// 
-//           if (filter == 0) {
-//             neigbhors[neighbors_len] = $0$;
-//             neighbors_len++;
-//           }
-//         }"""
-// 
-// for k in ["n1","n2","n3", "n4"]:
-//         print(template.replace("$0$", k))
-        {
-          int filter = 0;
-          for (int i = 0; i < *this_len; i++) {
-            Point p = this_owned_line[i];
-            if (p.x == n1.x && p.y == n1.y) {
-              filter = 1;
-              break;
-            }
-          }
-          if (filter == 0) {
-            for (int i = 0; i < neighbors_len; i++) {
-              Point p = neigbhors[i];
-              if (p.x == n1.x && p.y == n1.y) {
-                filter = 1;
-                break;
-              }
-            }
-          }
+      play_move(board, board_size, choice, this_owned_line, this_len, converted,
+                &converted_len, &active_player, player_color, 0);
 
-          if (filter == 0) {
-            neigbhors[neighbors_len] = n1;
-            neighbors_len++;
-          }
-        }
-        {
-          int filter = 0;
-          for (int i = 0; i < *this_len; i++) {
-            Point p = this_owned_line[i];
-            if (p.x == n2.x && p.y == n2.y) {
-              filter = 1;
-              break;
-            }
-          }
-          if (filter == 0) {
-            for (int i = 0; i < neighbors_len; i++) {
-              Point p = neigbhors[i];
-              if (p.x == n2.x && p.y == n2.y) {
-                filter = 1;
-                break;
-              }
-            }
-          }
+    } else {
+      this_len = &bottom_left_tiles_len;
+      this_owned_line = bottom_left_tiles;
+      player_color = PURPLE_BOTTOMLEFT;
+      // compute the best choice
+      Tile choice = get_random_tile();
 
-          if (filter == 0) {
-            neigbhors[neighbors_len] = n2;
-            neighbors_len++;
-          }
-        }
-        {
-          int filter = 0;
-          for (int i = 0; i < *this_len; i++) {
-            Point p = this_owned_line[i];
-            if (p.x == n3.x && p.y == n3.y) {
-              filter = 1;
-              break;
-            }
-          }
-          if (filter == 0) {
-            for (int i = 0; i < neighbors_len; i++) {
-              Point p = neigbhors[i];
-              if (p.x == n3.x && p.y == n3.y) {
-                filter = 1;
-                break;
-              }
-            }
-          }
-
-          if (filter == 0) {
-            neigbhors[neighbors_len] = n3;
-            neighbors_len++;
-          }
-        }
-        {
-          int filter = 0;
-          for (int i = 0; i < *this_len; i++) {
-            Point p = this_owned_line[i];
-            if (p.x == n4.x && p.y == n4.y) {
-              filter = 1;
-              break;
-            }
-          }
-          if (filter == 0) {
-            for (int i = 0; i < neighbors_len; i++) {
-              Point p = neigbhors[i];
-              if (p.x == n4.x && p.y == n4.y) {
-                filter = 1;
-                break;
-              }
-            }
-          }
-
-          if (filter == 0) {
-            neigbhors[neighbors_len] = n4;
-            neighbors_len++;
-          }
-        }
-
-        // try convert neighbors in convert_neigbhors
-        // no convert? -> break
-        // convert? mut board && mut this owned_line && neighbors -> filter && restart this process with convert neighbors as neighbors
-      }
-
+      play_move(board, board_size, &choice, this_owned_line, this_len,
+                converted, &converted_len, &active_player, player_color, 1);
     }
   }
 }
+
+int main() { play(25); }
