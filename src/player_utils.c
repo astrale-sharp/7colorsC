@@ -1,7 +1,7 @@
-#pragma once
-#include "colors/colors.h"
+#include "player_utils.h"
+#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <wchar.h>
 
 char *get_player_name(int active_player) {
 
@@ -14,9 +14,8 @@ char *get_player_name(int active_player) {
     color = BgPurple;
     name = "bottom left";
   }
-  char* dest = (char*)malloc(20*sizeof(char));
-  dest = strcat(dest, color);
-  dest = strcat(dest, name);
-  dest = strcat(dest, BACK);
+  char* dest = (char*)(malloc(40*sizeof(char)));
+  sprintf(dest, "%s%s%s", color, name, BACK);
+
   return dest;
 }

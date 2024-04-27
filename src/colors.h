@@ -1,4 +1,8 @@
 #pragma once
+#include <stdio.h>
+#include <stdlib.h>
+
+void print_color(int idx, int trailing_space);
 
 __attribute__((unused)) static const char *COLORS = "ABCDEFG";
 __attribute__((unused)) static const char *FgRed = "\033[31m";

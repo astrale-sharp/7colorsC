@@ -10,6 +10,6 @@ typedef enum Tile {
   GREEN,
   ORANGE,
   WHITE,
-  RED_TOPRIGHT,
-  PURPLE_BOTTOMLEFT,
+  RED_TOP_RIGHT,
+  PURPLE_BOTTOM_LEFT,
 } Tile;

@@ -1,6 +1,4 @@
 #include "colors.h"
-#include <stdio.h>
-#include <stdlib.h>
 
 // given the color index, will print the color beautifully
 void print_color(int idx, int trailing_space) {

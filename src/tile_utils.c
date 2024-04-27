@@ -1,9 +1,4 @@
-#pragma once
-#include "colors/colors.h"
-#include "types.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "tile_utils.h"
 
 char tile_to_char(enum Tile *t) {
   switch (*t) {
@@ -18,9 +13,9 @@ char tile_to_char(enum Tile *t) {
     return 'O';
   case WHITE:
     return 'W';
-  case RED_TOPRIGHT:
+  case RED_TOP_RIGHT:
     return ' ';
-  case PURPLE_BOTTOMLEFT:
+  case PURPLE_BOTTOM_LEFT:
     return ' ';
   }
 }
@@ -29,30 +24,30 @@ void print_tile_as_board(enum Tile *t) {
   switch (*t) {
 
   case BLUE:
-    printf(BgBlue);
+    printf("%s", BgBlue);
     break;
   case CYAN:
-    printf(BgCyan);
+    printf("%s", BgCyan);
     break;
   case GREEN:
-    printf(BgGreen);
+    printf("%s", BgGreen);
     break;
   case ORANGE:
-    printf(BgOrange);
+    printf("%s", BgOrange);
     break;
   case WHITE:
     // printf(BgWhite);
     break;
-  case RED_TOPRIGHT:
-    printf(BgRed);
+  case RED_TOP_RIGHT:
+    printf("%s", BgRed);
     break;
 
-  case PURPLE_BOTTOMLEFT:
-    printf(BgPurple);
+  case PURPLE_BOTTOM_LEFT:
+    printf("%s", BgPurple);
     break;
   }
   printf(" %c ", tile_to_char(t));
-  printf(BACK);
+  printf("%s", BACK);
 }
 
 enum Tile get_random_tile() { return (Tile)(random() % 5); }
