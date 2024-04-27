@@ -9,6 +9,23 @@
 #include <string.h>
 #include <time.h>
 
+struct World {
+  Tile **board;
+  size_t board_size;
+  Tile *choice;
+  Point *top_right_tiles;
+  Point *bottom_left_tiles;
+};
+
+struct PlayerInfo {
+  int *active_player;
+  Point *owned_line;
+  size_t *line_len;
+  Point *converted;
+  Tile color;
+  int is_ai;
+};
+
 void print_board(enum Tile **board, size_t board_size) {
   for (int x = 0; x < board_size; x++) {
     for (int y = 0; y < board_size; y++) {
