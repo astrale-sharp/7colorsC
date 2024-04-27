@@ -132,7 +132,7 @@ void play_move(Tile **board, size_t board_size, Tile *choice,
       filter_put(board, board_size, *choice, this_neighbor, converted,
                  converted_len, this_owned_line, this_len);
     }
-
+    free(neighbors);
     for (int j = 0; j < *converted_len; j++) {
       Point c = converted[j];
       int filter = 0;
@@ -196,24 +196,59 @@ int play(size_t board_size) {
   size_t bottom_left_tiles_len = 1;
 
   while (1) {
-    Point *converted = malloc(board_size * board_size * sizeof(Point));
-    size_t converted_len = 0;
-
     size_t *this_len;
     Point *this_owned_line;
-
     Tile player_color;
 
     if (active_player == 0) {
       this_len = &top_right_tiles_len;
       this_owned_line = top_right_tiles;
       player_color = RED_TOPRIGHT;
+    } else {
+      this_len = &bottom_left_tiles_len;
+      this_owned_line = bottom_left_tiles;
+      player_color = PURPLE_BOTTOMLEFT;
+    }
 
+    // pass turn if no move to play
+    int pass = 1;
+    for (int i = 0; i < *this_len; i++) {
+      Point *neighbors = get_4points_around(this_owned_line[i]);
+      for (int j = 0; j < 4; j++) {
+        Point p = neighbors[j];
+        if (!(p.x < 0 || p.x >= board_size || p.y < 0 || p.y >= board_size)) {
+          Tile t = board[p.x][p.y];
+          if (t != PURPLE_BOTTOMLEFT && t != RED_TOPRIGHT) {
+            pass = 0;
+            break;
+          }
+        }
+        if (pass == 0) {
+          break;
+        }
+      }
+      free(neighbors);
+    }
+
+    if (pass == 1) {
+      if (active_player == 0) {
+        active_player = 1;
+      } else {
+        active_player = 0;
+      }
+      continue;
+    }
+
+    char *player_name = get_player_name(active_player);
+    Point *converted = malloc(board_size * board_size * sizeof(Point));
+    size_t converted_len = 0;
+
+    if (active_player == 0) {
       printf("%s", CLEAR);
 
       print_board(board, board_size);
 
-      printf("Now playing : %s\n", get_player_name(active_player));
+      printf("Now playing : %s\n", player_name);
       printf("1 - BLUE\n2 - CYAN\n3 - GREEN\n4 - ORANGE\n5 - WHITE\n");
 
       enum Tile *choice = get_tile_choice();
@@ -231,18 +266,36 @@ int play(size_t board_size) {
 
       play_move(board, board_size, choice, this_owned_line, this_len, converted,
                 &converted_len, &active_player, player_color, 0);
+      free(choice);
 
     } else {
-      this_len = &bottom_left_tiles_len;
-      this_owned_line = bottom_left_tiles;
-      player_color = PURPLE_BOTTOMLEFT;
       // compute the best choice
       Tile choice = get_random_tile();
 
       play_move(board, board_size, &choice, this_owned_line, this_len,
                 converted, &converted_len, &active_player, player_color, 1);
     }
+    free(converted);
+    free(player_name);
+
+    if (*this_len >= (board_size * board_size) / 2) {
+      print_board(board, board_size);
+      printf("WIN CONDITION REACHED\n");
+      char *other_player_name = get_player_name(!active_player);
+      printf("%s\n", other_player_name);
+      free(other_player_name);
+      break;
+    }
   }
+
+  for (int x = 0; x < board_size; x++) {
+    free(board[x]);
+  }
+  free(board);
+  free(top_right_tiles);
+  free(bottom_left_tiles);
+
+  return 0;
 }
 
-int main() { play(25); }
+int main() { play(10); }

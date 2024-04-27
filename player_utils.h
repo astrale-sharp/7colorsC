@@ -14,9 +14,9 @@ char *get_player_name(int active_player) {
     color = BgPurple;
     name = "bottom left";
   }
-  char *dest = (char*)malloc(sizeof(char) * 30);
-  strcat(dest, color);
-  strcat(dest, name);
-  strcat(dest, BACK);
+  char* dest = (char*)malloc(20*sizeof(char));
+  dest = strcat(dest, color);
+  dest = strcat(dest, name);
+  dest = strcat(dest, BACK);
   return dest;
 }
