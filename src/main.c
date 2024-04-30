@@ -227,7 +227,7 @@ int play_against_ia(size_t board_size) {
 
       printf("skipping turn %s\n", info.name);
       free(info.converted);
-      // free(info.name);
+      free(info.name);
       continue;
     }
 
