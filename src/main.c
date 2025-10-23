@@ -25,6 +25,33 @@ sevencolors \"serve\" size port.\n\
 sevencolors \"connect\" address port.\n\
 	size must be between 3 and 200.\n\
 "
+int	board_send(int fd, void *buf, int buflen)
+{
+	int idx = 0;
+	while (idx != buflen)
+	{
+		int diff = send(fd, buf + idx, buflen - idx, 0);
+		if (diff <= 0)
+			return -1;
+		idx += diff;
+	}
+	return 0;
+}
+
+int	board_recv(int fd, void *buf, int buflen)
+{
+	int idx = 0;
+	while (idx != buflen)
+	{
+		int diff = recv(fd, buf + idx, buflen - idx, 0);
+		if (diff <= 0)
+			return -1;
+		idx += diff;
+	}
+	return 0;
+}
+
+
 
 void 	move_cursor(int a, int b);
 int remote_other_turn(int sfd, int **b, int size, int is_p1)
@@ -33,11 +60,10 @@ int remote_other_turn(int sfd, int **b, int size, int is_p1)
 	printf(CLEAR);
 	printf("Other playing...\n");
 	board_print(b, size);
-	int buf[1];
-	int status = recv(sfd, buf, sizeof(int), 0);
+	int choice;
+	int status = board_recv(sfd, &choice, sizeof(int));
 	if (status <= 0)
 		return 1;
-	int choice = buf[0];
 	int **cpy = board_cpy(b, size);
 	board_apply(b, size, choice, !is_p1);
 	move_cursor(0, 0);
@@ -68,12 +94,11 @@ int remote_player_turn(int sfd, int **b, int size, int is_p1)
 		r = fgetc(stdin);
 	} while (!(r >= '0' && r <= '4' && opti[r - '0']));
 	int **cpy = board_cpy(b, size);
-	board_apply(b, size, r - '0' + 2, is_p1);
-	int buf[1];
-	buf[0] = r - '0' + 2;
+	int choice = r - '0' + 2;
+	board_apply(b, size, choice, is_p1);
 	printf("Sending data...\n");
-	int sent = send(sfd, buf, sizeof(int), 0);
-	if (sent <= 0)
+	int sent = board_send(sfd, &choice, sizeof(int));
+	if (sent == -1)
 		return 1;
 	move_cursor(0, 0);
 	printf(CLEAR);
@@ -108,9 +133,9 @@ void remote_play(int sfd, int is_p1, int **b, int size)
 	move_cursor(0, 0);
 	printf(CLEAR);		
 	if ((is_p1 && p1_pt >= size * size / 2) || (!is_p1 && p2_pt >= size * size / 2))
-		printf("Congratulations! You won with %d/%d tiles.\n", (p1_pt * !p1_pt) + (p2_pt * p1_pt), size * size);
+		printf("Congratulations! You won with %d/%d tiles.\n", (p1_pt * !is_p1) + (p2_pt * is_p1), size * size);
 	else
-		printf("Damn! You lost with %d/%d tiles.\n", (p1_pt * !p1_pt) + (p2_pt * p1_pt), size * size);
+		printf("Damn! You lost with %d/%d tiles.\n", (p1_pt * !is_p1) + (p2_pt * is_p1), size * size);
 	printf("Press any touch to exit the game.\n");
 	board_print(b, size);
 	board_free(b, size);
@@ -125,20 +150,18 @@ void	serveplay(int sfd, int size)
 		printf(USAGEMSG);
 		return ;
 	}
-	int buf[1];
-	buf[0] = size;
 	printf("Sending size...\n");
-	int status = send(sfd, buf, sizeof(int) * 1, 0);
-	if (status <= 0)
+	int status = send(sfd, &size, sizeof(int), 0);
+	if (status == -1)
 	{
 		printf("Connection error exiting...");
 		return ;
 	}
 	int is_p1 = rand() % 2 == 0;
-	buf[0] = !is_p1;
+	int notp1 = !is_p1;
 	printf("Sending is_p1...\n");
-	status = send(sfd, buf, sizeof(int), 0);
-	if (status <= 0)
+	status = board_send(sfd, &notp1, sizeof(int));
+	if (status == -1)
 	{
 		printf("Connection error exiting...");
 		return ;
@@ -148,8 +171,8 @@ void	serveplay(int sfd, int size)
 	int **board = init_board(size);
 	for (int k = 0; k < size; k++)
 	{
-		status = send(sfd, board[k], sizeof(int) * size, 0);
-		if (status <= 0)
+		status = board_send(sfd, board[k], sizeof(int) * size);
+		if (status == -1)
 		{
 			printf("Connection error exiting...");
 			board_free(board, size);
@@ -169,22 +192,27 @@ void	serveplay(int sfd, int size)
 
 void connectplay(int sfd)
 {
-	int buf[1];
-	int status = recv(sfd, buf, sizeof(int) * 1, 0);
-	if (status <= 0)
+	int size;
+	int status = recv(sfd, &size, sizeof(int), 0);
+	if (status == -1)
 	{
 		printf("Connection error exiting...");
 		return ;
 	}
-	int size = buf[0];
-	status = recv(sfd, buf, sizeof(int) * 1, 0);
-	int is_p1 = buf[0];
+	int is_p1;
+	status = board_recv(sfd, &is_p1, sizeof(int));
+	if (status == -1)
+	{
+		printf("Connection error exiting...");
+		return ;
+	}
+
 	int	**board = malloc(sizeof(int*) * size);
 	for (int k = 0; k < size; k++)
 	{
 		board[k] = malloc(sizeof (int) * size);
-		status = recv(sfd, board[k], sizeof(int) * size, 0);
-		if (status <= 0)
+		status = board_recv(sfd, board[k], sizeof(int) * size);
+		if (status == -1)
 		{
 			printf("Connection error exiting...");
 			while (k >= 0)
