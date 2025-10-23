@@ -1,5 +1,5 @@
 NAME = sevencolors
-CFLAGS = -Wall -Wextra -Werror -Wpedantic -Iinclude
+CFLAGS = -Wall -Wextra -Werror -Wpedantic -Iinclude -fsanitize=address -g
 SRC = $(addprefix src/, main.c board.c gamelogic.c)
 OBJ = $(SRC:.c=.o)
 all: $(NAME)

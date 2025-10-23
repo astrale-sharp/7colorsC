@@ -6,7 +6,6 @@
 
 int **init_board(int size)
 {
-	srand(time(0));
 	int	**board = board_new(size);
 	board_random_populate(board, size);
 	board[0][0] = 0;
@@ -102,5 +101,6 @@ void play(int size)
 		printf("Damn! You lost with %d/%d tiles.\n", p1_pt, size * size);
 	printf("Press any touch to exit the game.\n");
 	board_print(b, size);
+	board_free(b, size);
 	fgetc(stdin);
 }
