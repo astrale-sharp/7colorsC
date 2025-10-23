@@ -31,8 +31,12 @@ int	board_send(int fd, void *buf, int buflen)
 	while (idx != buflen)
 	{
 		int diff = send(fd, buf + idx, buflen - idx, 0);
-		if (diff <= 0)
+		if (diff == -1)
+		{
+			printf("ERROR BUFLEN-INDEX-DIFF:%d-%d-%d\nPress a touch", buflen, idx, diff);
+			fgetc(stdin);
 			return -1;
+		}
 		idx += diff;
 	}
 	return 0;
@@ -44,8 +48,12 @@ int	board_recv(int fd, void *buf, int buflen)
 	while (idx != buflen)
 	{
 		int diff = recv(fd, buf + idx, buflen - idx, 0);
-		if (diff <= 0)
+		if (diff == -1)
+		{
+			printf("ERROR BUFLEN-INDEX-DIFF:%d-%d-%d\nPress a touch", buflen, idx, diff);
+			fgetc(stdin);
 			return -1;
+		}
 		idx += diff;
 	}
 	return 0;
@@ -62,7 +70,7 @@ int remote_other_turn(int sfd, int **b, int size, int is_p1)
 	board_print(b, size);
 	int choice;
 	int status = board_recv(sfd, &choice, sizeof(int));
-	if (status <= 0)
+	if (status == -1)
 		return 1;
 	int **cpy = board_cpy(b, size);
 	board_apply(b, size, choice, !is_p1);
@@ -138,7 +146,6 @@ void remote_play(int sfd, int is_p1, int **b, int size)
 		printf("Damn! You lost with %d/%d tiles.\n", (p1_pt * !is_p1) + (p2_pt * is_p1), size * size);
 	printf("Press any touch to exit the game.\n");
 	board_print(b, size);
-	board_free(b, size);
 	fgetc(stdin);
 }
 
@@ -186,8 +193,9 @@ void	serveplay(int sfd, int size)
 	tcgetattr(0, &new);
 	new.c_lflag &= ~(ICANON | ECHO);
 	tcsetattr(0, TCSANOW, &new);
-	remote_play( sfd, is_p1, board, size);
+	remote_play(sfd, is_p1, board, size);
 	tcsetattr(0, TCSANOW, &old);
+	board_free(board, size);
 }
 
 void connectplay(int sfd)
@@ -231,6 +239,7 @@ void connectplay(int sfd)
 	tcsetattr(0, TCSANOW, &new);
 	remote_play(sfd, is_p1, board, size);
 	tcsetattr(0, TCSANOW, &old);
+	board_free(board, size);
 }
 
 void playsolo(char **av)
